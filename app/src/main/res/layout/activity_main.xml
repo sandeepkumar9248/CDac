@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/RemoteSurfaceView"
+        android:layout_width="wrap_content"
+        android:layout_height="367dp"
+        android:layout_gravity="center" />
+
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/LocalSurfaceView"
+        android:layout_width="120dp"
+        android:layout_height="160dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp" />
+
+    <TextView
+        android:id="@+id/LogcatView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="5dp"
+        android:textColor="@android:color/white" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|start"
+            android:text="@string/select_resolution" />
+
+        <androidx.appcompat.widget.AppCompatSpinner
+            android:id="@+id/resolutionSpinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginHorizontal="6dp"
+        android:gravity="center|start"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:text="@string/select_audio_output" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/audioOutputSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:text="@string/select_audio_input" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/audioInputSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/dest_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="@string/remote_user"/>
+
+            <Button
+                android:id="@+id/connect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_marginHorizontal="25dp"
+                android:layout_weight="1"
+                android:text="@string/connect"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/call"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/call"
+                android:layout_marginHorizontal="5dp"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/tiltVideo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:visibility="gone"
+                android:text="Tilt Video"
+                android:textAllCaps="false" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/bottomView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="5dp">
+
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/muteAudio"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="@color/purple_500"
+                android:padding="12dp"
+                android:src="@drawable/ic_baseline_mic_24" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/muteVideo"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="@color/purple_500"
+                android:padding="12dp"
+                android:src="@drawable/ic_baseline_videocam_24" />
+
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/switchCamera"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="@color/purple_500"
+                android:padding="12dp"
+                android:src="@drawable/ic_baseline_cameraswitch_24" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/end"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="@color/red"
+                android:padding="12dp"
+                android:src="@drawable/ic_baseline_call_end_24" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+
+</FrameLayout>

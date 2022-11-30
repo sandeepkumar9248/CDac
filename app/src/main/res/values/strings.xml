@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">P2PKotlinSdk</string>
+    <string name="connect">Connect</string>
+    <string name="call">Call</string>
+    <string name="remote_user">Remote User</string>
+    <string name="select_audio_input">Select Audio Input:</string>
+    <string name="select_audio_output">Select Audio Output:</string>
+    <string name="select_resolution">Select resolution:</string>
+    <string name="answer">Answer</string>
+</resources>
