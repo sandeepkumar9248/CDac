@@ -64,17 +64,11 @@ object InstaSDK {
         instance!!.videoUnMute()
     }
 
-    fun getSentBytesStats(): Int {
-        return instance!!.getSentBytesStats()
-    }
-
-    fun tiltVideo(status: Boolean) {
-        instance!!.tiltVideo(status)
+    fun getSentBytesStats(selfId: String?): Int {
+        return instance!!.getSentBytesStats(selfId)
     }
 
     fun switchCamera() {
         instance!!.switchCamera()
-    } /*public static void call(Context context, SurfaceViewRenderer localView, SurfaceViewRenderer remoteView, String serverUrl, String selfId, String remoteId) {
-        InstaPeer.getInstance().connectServer(context, localView, remoteView, serverUrl, selfId, remoteId);
-    }*/
+    }
 }

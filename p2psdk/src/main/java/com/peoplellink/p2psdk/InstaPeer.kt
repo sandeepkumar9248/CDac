@@ -16,8 +16,8 @@ import java.net.URISyntaxException
 
 class InstaPeer private constructor() {
     private var remoteUserId: String? = null
-
-    //    private var webSocketClient: WebSocketClient? = null
+    private var meetingStartTime: String? = null
+    private var meetingId: String? = null
     private var mVideoTrack: VideoTrack? = null
     private var mAudioTrack: AudioTrack? = null
 
@@ -34,8 +34,8 @@ class InstaPeer private constructor() {
     private var userName: String? = null
     private var credential: String? = null
     private var instaListener: InstaListener? = null
-    var finalBytes = 0
-    var kilobytes = 56
+    private var finalBytes = 0
+    private var kilobytes = 56
     private var mSocket: Socket? = null
 
     fun setListener(listener: InstaListener?) {
@@ -50,6 +50,7 @@ class InstaPeer private constructor() {
         callBack: ActionCallBack
     ) {
         try {
+            finalBytes = 0
             val mOptions = IO.Options()
             mOptions.query = "uid=$selfId&projectId=$projectId"
             mSocket = IO.socket(serverUrl, mOptions)
@@ -68,7 +69,9 @@ class InstaPeer private constructor() {
             when (mainJson.getString("type")) {
                 "offer" -> {
                     remoteUserId = mainJson.getString("msgFrom")
-                    onRemoteOfferReceived(mainJson, remoteUserId)
+                    meetingStartTime = mainJson.getString("meetingStartTime")
+                    meetingId = mainJson.getString("meetingId")
+                    onRemoteOfferReceived(mainJson)
                 }
                 "candidate" -> onRemoteCandidateReceived(mainJson)
                 "incoming" -> {
@@ -89,19 +92,6 @@ class InstaPeer private constructor() {
 
             }
 
-        }
-    }
-
-    private fun setUserID(userid: String) {
-        val jsonMain = JSONObject()
-        try {
-
-            jsonMain.put("type", "userid")
-            jsonMain.put("value", userid)
-            send(jsonMain.toString())
-        } catch (e: JSONException) {
-            Log.d("testcase", "Exception : " + e.message)
-            e.printStackTrace()
         }
     }
 
@@ -303,7 +293,7 @@ class InstaPeer private constructor() {
         }
     }
 
-    private fun onRemoteOfferReceived(message: JSONObject, remoteId: String?) {
+    private fun onRemoteOfferReceived(message: JSONObject) {
         Log.d("testcase", "offReceived $message")
         if (mPeerConnection == null) {
             mPeerConnection = createPeerConnection()
@@ -323,7 +313,6 @@ class InstaPeer private constructor() {
     }
 
     private fun onRemoteAnswerReceived(message: JSONObject) {
-        Log.d("testcase", "ansReceived $message")
         try {
             val description = message.getString("sdp")
             mPeerConnection!!.setRemoteDescription(
@@ -337,7 +326,6 @@ class InstaPeer private constructor() {
     }
 
     private fun onRemoteCandidateReceived(message: JSONObject) {
-        Log.d("testcase", "candiReceived $message")
         try {
             val childJson = message.getJSONObject("candidate")
             val remoteIceCandidate = IceCandidate(
@@ -385,7 +373,7 @@ class InstaPeer private constructor() {
                     send(message.toString())
 
                     callBack.onSuccess("Offer sent success")
-                    Log.d("conf_message", "onCreateSuccess: " + message)
+                    Log.d("conf_message", "onCreateSuccess: $message")
                 } catch (e: JSONException) {
                     e.printStackTrace()
                     callBack.onFailure("Offer failed " + e.message)
@@ -408,17 +396,16 @@ class InstaPeer private constructor() {
                     sessionDescription
                 )
                 val message = JSONObject()
-//                try {
+
                 message.put("id", remoteUserId)
                 message.put("type", "answer")
                 message.put("sdp", sessionDescription.description)
                 message.put("from", selfId)
-                //aaa
-                Log.d("answerCall", "onCreateSuccess: " + message)
+                message.put("meetingId", meetingId)
+                message.put("meetingStartTime", meetingStartTime)
+                message.put("from", selfId)
+                Log.d("answerCall", "onCreateSuccess: $message")
                 send(message.toString())
-//                } catch (e: JSONException) {
-//                    e.printStackTrace()
-//                }
             }
         }, sdpMediaConstraints)
     }
@@ -477,7 +464,7 @@ class InstaPeer private constructor() {
         mVideoTrack!!.setEnabled(true)
     }
 
-    fun getSentBytesStats(): Int {
+    fun getSentBytesStats(selfId: String?): Int {
 
         mPeerConnection?.getStats { rtcStatsReport ->
             try {
@@ -485,22 +472,44 @@ class InstaPeer private constructor() {
 
                 val json: String = ObjectMapper().writeValueAsString(rtcStatsReport.statsMap.values)
                 val statsArray = JSONArray(json)
+                var packetsLost = 0
                 for (i in 0 until statsArray.length()) {
                     val statsObj = statsArray.getJSONObject(i)
+
+                    if (statsObj.getString("id").contains("RTCInboundRTPVideoStream")) {
+                        val membersObj = statsObj.getJSONObject("members")
+                        packetsLost = membersObj.getInt("packetsLost")
+                    }
+
                     if (statsObj.getString("id").contains("RTCOutboundRTPVideoStream")) {
                         val membersObj = statsObj.getJSONObject("members")
-                        val bytesSent = membersObj.getString("bytesSent")
-                        Log.d("RTCStatsReport", "bytesSent $bytesSent")
+                        val bytesSent = membersObj.optString("bytesSent") ?: "0"
+                        val framesPerSecond = membersObj.optString("framesPerSecond") ?: "0"
 
-//                        finalBytes = if (finalBytes < bytesSent.toInt())
-                        finalBytes = bytesSent.toInt() - finalBytes
-//                        else
-//                            finalBytes - bytesSent.toInt()
+                        val bits = bytesSent.toInt() - finalBytes
 
-                        Log.d("RTCStatsReport", "finalBytes $finalBytes")
+                        val kilobytes = bits / 1000
 
-                        kilobytes = finalBytes / 1000
-                        Log.d("RTCStatsReport", "finalKB $kilobytes")
+                        finalBytes = bytesSent.toInt()
+                        val stats = JSONObject()
+                        stats.put("os", "Android")
+                        stats.put("platform", "mobile_android")
+                        stats.put("ipAddress", "")
+                        stats.put("audioCodec", "audio/opus")
+                        stats.put("videoCodec", "video/H264")
+                        stats.put("bandwidthUsed", kilobytes)
+                        stats.put("packetLost", packetsLost)
+                        stats.put("frameRate", framesPerSecond.toFloat())
+                        stats.put("browser", "")
+
+                        val dict = JSONObject()
+                        dict.put("type", "getStats")
+                        dict.put("stats", stats)
+                        dict.put("id", remoteUserId)
+                        dict.put("from", selfId)
+                        mSocket!!.emit("conf_message", dict.toString())
+                        Log.d("RTCStatsReport", "statsForSend $dict")
+
                     }
                 }
             } catch (e: JsonProcessingException) {
@@ -524,18 +533,8 @@ class InstaPeer private constructor() {
         }
     }
 
-    private val isOpen: Boolean
-        get() = mSocket != null && mSocket!!.isActive
-
-//    val isClosed: Boolean
-//        get() = webSocketClient != null && webSocketClient!!.isClosed
-
     fun send(msg: String?) {
-//        if (isOpen) {
         mSocket!!.emit("conf_message", msg)
-//        } else {
-//            Log.e("testcase", "Can't send message. WebSocket is null or closed")
-//        }
     }
 
     companion object {

@@ -4,7 +4,6 @@ import android.Manifest
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHeadset
 import android.bluetooth.BluetoothManager
-import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.*
@@ -24,7 +23,6 @@ import com.peoplellink.p2psdk.InstaSDK.audioUnMute
 import com.peoplellink.p2psdk.InstaSDK.connectServer
 import com.peoplellink.p2psdk.InstaSDK.disconnect
 import com.peoplellink.p2psdk.InstaSDK.getSentBytesStats
-
 import com.peoplellink.p2psdk.InstaSDK.initialise
 import com.peoplellink.p2psdk.InstaSDK.instaListener
 import com.peoplellink.p2psdk.InstaSDK.leave
@@ -34,7 +32,6 @@ import com.peoplellink.p2psdk.InstaSDK.switchCamera
 import com.peoplellink.p2psdk.InstaSDK.videoMute
 import com.peoplellink.p2psdk.InstaSDK.videoUnMute
 import com.peoplellink.p2psdk.databinding.ActivityMainBinding
-import kotlinx.coroutines.*
 import java.lang.reflect.Method
 import java.util.*
 
@@ -58,21 +55,14 @@ class MainActivity : AppCompatActivity(), InstaListener, View.OnClickListener {
     private var bufferElements2Rec = 1024 // want to play 2048 (2K) since 2 bytes we use only 1024
 
     private var bytesPerElement = 2
-//    private var mSocket: Socket? = null
 
     val audioInputDevicesList = ArrayList<String>()
     val audioDevicesList = ArrayList<String>()
     var bluetoothName = ""
     private lateinit var mHeadsetBroadcastReceiver: BTReceiver
     var isSocketConnected = false
-    var isVideoTilted = false
-    private val myTimer = Timer()
 
-    companion object {
-//        private const val WS_SERVER =
-//            "wss://testcdac-cdn.invc.vc/socket.io/?uid=232&projectId=testid&EIO=4&transport=polling&t=OHLrAQi"
-//        private const val WS_SERVER = "wss://p2papi.instavc.com/"
-    }
+    private val myTimer = Timer()
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -443,19 +433,6 @@ class MainActivity : AppCompatActivity(), InstaListener, View.OnClickListener {
         audioManager?.isBluetoothScoOn = false
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun isHeadphonesPlugged(): Boolean {
-        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        val audioDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
-        for (deviceInfo in audioDevices) {
-            if (deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES || deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADSET) {
-                Log.d("isHeadphonesPlugged", "isHeadphonesPlugged: " + deviceInfo.id)
-                return true
-            }
-        }
-        return false
-    }
-
     override fun onResume() {
         super.onResume()
         registerReceiver(
@@ -501,24 +478,13 @@ class MainActivity : AppCompatActivity(), InstaListener, View.OnClickListener {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    fun repeatFun(): Job {
-        return CoroutineScope(Dispatchers.Default).launch {
-            while (isActive) {
-                //do your network request here
-                getBandWidth()
-                delay(10000)
-            }
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.M)
     fun getBandWidth() {
         if (verifyAvailableNetwork(this)) {
             /*  val connectionManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
               val nc = connectionManager.getNetworkCapabilities(connectionManager.activeNetwork)
               val downSpeed = nc!!.linkDownstreamBandwidthKbps
               val upSpeed = nc.linkUpstreamBandwidthKbps*/
-            val sentKB = getSentBytesStats()
+            val sentKB = getSentBytesStats(selfId)
             if (sentKB < 56) {
                 isVideoMuted = false
                 muteUnMuteVideo()
@@ -543,10 +509,7 @@ class MainActivity : AppCompatActivity(), InstaListener, View.OnClickListener {
     override fun onDestroy() {
         super.onDestroy()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            CoroutineScope(Dispatchers.Default).launch {
-//                repeatFun().cancel()
-//            }
-//            disconnect()
+            HeadsetReceiver.instance.unregister(this)
         }
     }
 }
