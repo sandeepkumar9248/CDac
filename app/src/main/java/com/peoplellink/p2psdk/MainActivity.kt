@@ -28,6 +28,7 @@ import com.peoplellink.p2psdk.InstaSDK.instaListener
 import com.peoplellink.p2psdk.InstaSDK.leave
 import com.peoplellink.p2psdk.InstaSDK.makeCall
 import com.peoplellink.p2psdk.InstaSDK.setVideoResolution
+import com.peoplellink.p2psdk.InstaSDK.startCall
 import com.peoplellink.p2psdk.InstaSDK.switchCamera
 import com.peoplellink.p2psdk.InstaSDK.videoMute
 import com.peoplellink.p2psdk.InstaSDK.videoUnMute
@@ -42,6 +43,9 @@ class MainActivity : AppCompatActivity(), InstaListener, View.OnClickListener {
     private var isAudioMuted: Boolean = false
 
     private var selfId: String? = null
+    private var senderName: String? = null
+    private var encounterID: String? = null
+    private var trueOrFalse: String? = null
     private var audioManager: AudioManager? = null
 
     private val resolutionArray = arrayOf("240p", "360p", "480p", "720p", "1080p", "4k")
@@ -71,17 +75,23 @@ class MainActivity : AppCompatActivity(), InstaListener, View.OnClickListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-
         HeadsetReceiver.instance.register(this)
         mHeadsetBroadcastReceiver = BTReceiver()
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         audioManager!!.isSpeakerphoneOn = true
         audioManager?.mode = AudioManager.MODE_IN_CALL
 
-        selfId = intent.getStringExtra("name")
-        onConnectSucceed()
+        selfId = intent.getStringExtra("userId")
+        senderName = intent.getStringExtra("senderName")
+        encounterID = intent.getStringExtra("encounterID")
+        trueOrFalse = intent.getStringExtra("trueOrFalse")
+        val remoteUser = intent.getStringExtra("remoteUser")
 
-//        binding.connect.setOnClickListener { onConnectSucceed() }
+        Log.d("TAG", "onCreate: $selfId $senderName $encounterID $trueOrFalse $remoteUser")
+
+
+
+        onConnectSucceed()
 
         initialise(
             applicationContext, binding.LocalSurfaceView, binding.RemoteSurfaceView,
@@ -96,6 +106,9 @@ class MainActivity : AppCompatActivity(), InstaListener, View.OnClickListener {
 //            if (repeatFun().isActive) repeatFun().cancel()
             if (isSocketConnected) disconnect()
             else finish()
+        }
+        if (trueOrFalse == "true") {
+            startCall(selfId, remoteUser)
         }
 
         binding.switchCamera.setOnClickListener { switchCamera() }
@@ -175,14 +188,6 @@ class MainActivity : AppCompatActivity(), InstaListener, View.OnClickListener {
             }
         }
 
-//        repeatFun()
-
-//        val myTimer = Timer()
-//        myTimer.schedule(object : TimerTask() {
-//            override fun run() {
-//                getBandWidth()
-//            }
-//        }, 1000)
         myTimer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 getBandWidth()
@@ -373,22 +378,28 @@ class MainActivity : AppCompatActivity(), InstaListener, View.OnClickListener {
     private fun onConnectSucceed() {
 
         val WS_SERVER = "https://testcdac-cdn.invc.vc/"
-//        val WS_SERVER = "http://172.16.16.43:3006/"
+//https://testcdac-cdn.invc.vc/socket.io/?uid=12&projectId=testid&selfName=Sandeep&appName=eSanjeevani2.0&encounterUid=213&EIO=4&transport=polling&t=OLs04s1
+        connectServer(
+            WS_SERVER,
+            selfId,
+            "testid",
+            senderName,
+            encounterID, "eSanjeevani2.0",
+            object : ActionCallBack {
+                override fun onSuccess(message: String?) {
+                    binding.connect.isEnabled = false
+                    isSocketConnected = true
+                    Log.d("onConnectSucceed", "onSuccess $message")
+                }
 
-        connectServer(WS_SERVER, selfId, "testid", object : ActionCallBack {
-            override fun onSuccess(message: String?) {
-                binding.connect.isEnabled = false
-                isSocketConnected = true
-                Log.d("onConnectSucceed", "onSuccess $message")
-            }
-
-            override fun onFailure(error: String?) {
-                binding.connect.isEnabled = true
-                isSocketConnected = false
-                Toast.makeText(this@MainActivity, "Connection failed", Toast.LENGTH_SHORT).show()
-                Log.d("onConnectSucceed", "onFailure $error")
-            }
-        })
+                override fun onFailure(error: String?) {
+                    binding.connect.isEnabled = true
+                    isSocketConnected = false
+                    Toast.makeText(this@MainActivity, "Connection failed", Toast.LENGTH_SHORT)
+                        .show()
+                    Log.d("onConnectSucceed", "onFailure $error")
+                }
+            })
     }
 
     override fun offerReceived(remoteId: String?) {}

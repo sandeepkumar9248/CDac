@@ -24,24 +24,6 @@
         android:layout_margin="5dp"
         android:textColor="@android:color/white" />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|start"
-            android:text="@string/select_resolution" />
-
-        <androidx.appcompat.widget.AppCompatSpinner
-            android:id="@+id/resolutionSpinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -91,34 +73,53 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|start"
+                android:text="@string/select_resolution" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/resolutionSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone">
 
             <androidx.appcompat.widget.AppCompatEditText
                 android:id="@+id/dest_id"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="@string/remote_user"/>
+                android:hint="@string/remote_user" />
 
             <Button
                 android:id="@+id/connect"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
                 android:layout_marginHorizontal="25dp"
                 android:layout_weight="1"
                 android:text="@string/connect"
-                android:textAllCaps="false" />
+                android:textAllCaps="false"
+                android:visibility="gone" />
 
             <Button
                 android:id="@+id/call"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
                 android:layout_weight="1"
                 android:text="@string/call"
-                android:layout_marginHorizontal="5dp"
                 android:textAllCaps="false" />
 
             <Button
@@ -126,9 +127,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:visibility="gone"
                 android:text="Tilt Video"
-                android:textAllCaps="false" />
+                android:textAllCaps="false"
+                android:visibility="gone" />
         </LinearLayout>
 
 

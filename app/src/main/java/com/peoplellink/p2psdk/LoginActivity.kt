@@ -18,9 +18,12 @@ import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import com.peoplellink.p2psdk.databinding.ActivityLoginBinding
+import com.peoplellink.p2psdk.databinding.ActivityMainBinding
 
 
 class LoginActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityLoginBinding
 
 
     @RequiresApi(Build.VERSION_CODES.S)
@@ -34,20 +37,32 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         this.supportActionBar!!.hide()
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        val userName = findViewById<EditText>(R.id.uname)
-        val login = findViewById<Button>(R.id.btnClick)
 
-        login.setOnClickListener { _: View? ->
+        binding.btnClick.setOnClickListener { _: View? ->
 
+            if (binding.userId.text.toString().trim().isEmpty()
+                || binding.senderName.text.toString().trim().isEmpty()
+                || binding.encounterID.text.toString().trim().isEmpty()
+                || binding.trueOrFalse.text.toString().trim().isEmpty()
+                || binding.remoteUser.text.toString().trim().isEmpty()
+            ) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             Dexter.withContext(this)
                 .withPermissions(permissions).withListener(object : MultiplePermissionsListener {
                     override fun onPermissionsChecked(report: MultiplePermissionsReport) {
 
                         if (report.areAllPermissionsGranted()) {
                             val intent = Intent(this@LoginActivity, MainActivity::class.java)
-                            intent.putExtra("name", userName.text.toString())
+                            intent.putExtra("userId", binding.userId.text.toString())
+                            intent.putExtra("senderName", binding.senderName.text.toString())
+                            intent.putExtra("encounterID", binding.encounterID.text.toString())
+                            intent.putExtra("trueOrFalse", binding.trueOrFalse.text.toString())
+                            intent.putExtra("remoteUser", binding.remoteUser.text.toString())
                             startActivity(intent)
                         } else {
                             showRationalDialogForPermissions()
@@ -88,5 +103,10 @@ class LoginActivity : AppCompatActivity() {
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
             }.show()
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finish()
     }
 }

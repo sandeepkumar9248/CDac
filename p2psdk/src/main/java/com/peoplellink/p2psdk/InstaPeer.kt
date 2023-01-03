@@ -20,11 +20,9 @@ class InstaPeer private constructor() {
     private var meetingId: String? = null
     private var mVideoTrack: VideoTrack? = null
     private var mAudioTrack: AudioTrack? = null
-
-    //FOR DISPOSE
     private var mPeerConnectionFactory: PeerConnectionFactory? = null
     private var mSurfaceTextureHelper: SurfaceTextureHelper? = null
-    private var mVideoCapturer: VideoCapturer? = null
+    private var mVideoCapture: VideoCapturer? = null
     private var mPeerConnection: PeerConnection? = null
     private var mLocalSurfaceView: SurfaceViewRenderer? = null
     private var mRemoteSurfaceView: SurfaceViewRenderer? = null
@@ -42,17 +40,20 @@ class InstaPeer private constructor() {
         instaListener = listener
     }
 
-
     fun connectServer(
         serverUrl: String?,
         selfId: String,
         projectId: String?,
+        selfName: String?,
+        encounterUid: String?,
+        appName: String?,
         callBack: ActionCallBack
     ) {
         try {
             finalBytes = 0
             val mOptions = IO.Options()
-            mOptions.query = "uid=$selfId&projectId=$projectId"
+            mOptions.query =
+                "uid=$selfId&projectId=$projectId&selfName=$selfName&appName=$appName&encounterUid=$encounterUid"
             mSocket = IO.socket(serverUrl, mOptions)
             mSocket!!.connect()
             callBack.onSuccess("Connected to server")
@@ -68,14 +69,14 @@ class InstaPeer private constructor() {
             val mainJson = JSONObject(args[0].toString())
             when (mainJson.getString("type")) {
                 "offer" -> {
-                    remoteUserId = mainJson.getString("msgFrom")
-                    meetingStartTime = mainJson.getString("meetingStartTime")
-                    meetingId = mainJson.getString("meetingId")
+                    remoteUserId = mainJson.optString("msgFrom")
+                    meetingStartTime = mainJson.optString("meetingStartTime")
+                    meetingId = mainJson.optString("meetingId")
                     onRemoteOfferReceived(mainJson)
                 }
                 "candidate" -> onRemoteCandidateReceived(mainJson)
                 "incoming" -> {
-                    makeCall(mainJson.getString("id"), mainJson.getString("msgFrom"),
+                    makeCall(mainJson.optString("id"), mainJson.optString("msgFrom"),
                         object : ActionCallBack {
                             override fun onSuccess(message: String?) {
                                 Log.d("makeCall", "onSuccess$message")
@@ -120,8 +121,8 @@ class InstaPeer private constructor() {
         mSurfaceTextureHelper =
             SurfaceTextureHelper.create("CaptureThread", mRootEglBase.eglBaseContext)
         val videoSource = mPeerConnectionFactory!!.createVideoSource(false)
-        mVideoCapturer = createVideoCapturer(context)
-        mVideoCapturer?.initialize(mSurfaceTextureHelper, context, videoSource.capturerObserver)
+        mVideoCapture = createVideoCapturer(context)
+        mVideoCapture?.initialize(mSurfaceTextureHelper, context, videoSource.capturerObserver)
         mVideoTrack = mPeerConnectionFactory!!.createVideoTrack(VIDEO_TRACK_ID, videoSource)
         mVideoTrack?.setEnabled(true)
         mVideoTrack?.addSink(mLocalSurfaceView)
@@ -130,12 +131,12 @@ class InstaPeer private constructor() {
         mAudioTrack?.setEnabled(true)
 
         //TO START LOCAL CAPTURE
-        mVideoCapturer!!.startCapture(VIDEO_RESOLUTION_WIDTH, VIDEO_RESOLUTION_HEIGHT, VIDEO_FPS)
+        mVideoCapture!!.startCapture(VIDEO_RESOLUTION_WIDTH, VIDEO_RESOLUTION_HEIGHT, VIDEO_FPS)
 
     }
 
     fun setVideoResolution(width: Int, height: Int, ps: Int) {
-        mVideoCapturer!!.changeCaptureFormat(width, height, ps)
+        mVideoCapture!!.changeCaptureFormat(width, height, ps)
 
     }
 
@@ -164,31 +165,27 @@ class InstaPeer private constructor() {
 
     private fun createVideoCapturer(context: Context): VideoCapturer? {
         return if (Camera2Enumerator.isSupported(context)) {
-            createCameraCapturer(Camera2Enumerator(context))
+            createCameraCapture(Camera2Enumerator(context))
         } else {
-            createCameraCapturer(Camera1Enumerator(true))
+            createCameraCapture(Camera1Enumerator(true))
         }
     }
 
-    private fun createCameraCapturer(enumerator: CameraEnumerator): VideoCapturer? {
+    private fun createCameraCapture(enumerator: CameraEnumerator): VideoCapturer? {
         val deviceNames = enumerator.deviceNames
         for (deviceName in deviceNames) {
             if (enumerator.isFrontFacing(deviceName)) {
-                val videoCapturer: VideoCapturer? = enumerator.createCapturer(deviceName, null)
-                if (videoCapturer != null) return videoCapturer
+                val videoCapture: VideoCapturer? = enumerator.createCapturer(deviceName, null)
+                if (videoCapture != null) return videoCapture
             }
         }
         for (deviceName in deviceNames) {
             if (enumerator.isBackFacing(deviceName)) {
-                val videoCapturer: VideoCapturer? = enumerator.createCapturer(deviceName, null)
-                if (videoCapturer != null) return videoCapturer
+                val videoCapture: VideoCapturer? = enumerator.createCapturer(deviceName, null)
+                if (videoCapture != null) return videoCapture
             }
         }
         return null
-    }
-
-    fun tiltVideo(status: Boolean) {
-        mLocalSurfaceView?.setMirror(status)
     }
 
     private fun createPeerConnection(): PeerConnection? {
@@ -340,6 +337,15 @@ class InstaPeer private constructor() {
         }
     }
 
+    fun startCall(selfId: String?, remoteUser: String?) {
+        val message = JSONObject()
+        message.put("id", remoteUser)
+        message.put("msgFrom", selfId)
+        message.put("from", selfId)
+        message.put("type", "incoming")
+        send(message.toString())
+    }
+
     fun makeCall(selfId: String?, remoteId: String?, callBack: ActionCallBack) {
         remoteUserId = remoteId
         if (mPeerConnection == null) {
@@ -425,7 +431,7 @@ class InstaPeer private constructor() {
 
     fun leave() {
         try {
-            mVideoCapturer!!.stopCapture()
+            mVideoCapture!!.stopCapture()
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
@@ -435,7 +441,7 @@ class InstaPeer private constructor() {
         }
         mLocalSurfaceView?.release()
         mRemoteSurfaceView?.release()
-        mVideoCapturer?.dispose()
+        mVideoCapture?.dispose()
         mSurfaceTextureHelper?.dispose()
         PeerConnectionFactory.stopInternalTracingCapture()
         PeerConnectionFactory.shutdownInternalTracer()
@@ -522,9 +528,9 @@ class InstaPeer private constructor() {
     }
 
     fun switchCamera() {
-        if (mVideoCapturer != null) {
-            if (mVideoCapturer is CameraVideoCapturer) {
-                val cameraVideoCapturer = mVideoCapturer as CameraVideoCapturer
+        if (mVideoCapture != null) {
+            if (mVideoCapture is CameraVideoCapturer) {
+                val cameraVideoCapturer = mVideoCapture as CameraVideoCapturer
                 cameraVideoCapturer.switchCamera(null)
             } else {
                 // Will not switch camera, video capturer is not a camera

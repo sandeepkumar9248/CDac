@@ -9,9 +9,12 @@ object InstaSDK {
         serverUrl: String?,
         selfId: String?,
         projectId: String?,
+        selfName: String?,
+        encounterUid: String?,
+        appName: String?,
         callBack: ActionCallBack?
     ) {
-        instance!!.connectServer(serverUrl, selfId!!, projectId, callBack!!)
+        instance!!.connectServer(serverUrl, selfId!!, projectId, selfName, encounterUid,appName, callBack!!)
     }
 
     fun instaListener(instaListener: InstaListener?) {
@@ -34,6 +37,10 @@ object InstaSDK {
 
     fun makeCall(selfId: String?, remoteId: String?, callBack: ActionCallBack?) {
         instance!!.makeCall(selfId, remoteId, callBack!!)
+    }
+
+    fun startCall(selfId: String?,remoteUser:String?) {
+        instance!!.startCall(selfId,remoteUser)
     }
 
     fun answerCall(selfId: String) {
